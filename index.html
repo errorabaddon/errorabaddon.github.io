@@ -43,6 +43,30 @@
       margin-top: 10px;
     }
 
+    .welcome-screen {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: red;
+  background-color: black;
+  padding: 40px;
+  text-align: center;
+  border: 2px solid red;
+  font-family: monospace;
+  z-index: 5;
+}
+
+.welcome-screen button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: red;
+  border: none;
+  color: black;
+  font-weight: bold;
+  cursor: pointer;
+}
+
     input {
       flex: 1;
       background-color: black;
@@ -127,6 +151,13 @@
     </div>
   </div>
 
+  <!-- Welcome Screen -->
+<div class="welcome-screen" id="welcomeScreen">
+  <h1>Welcome to Abaddon Terminal</h1>
+  <p>Enter the terminal to begin your experience.</p>
+  <button onclick="enterTerminal()">Enter Terminal</button>
+</div>
+
   <!-- Video Overlay -->
   <div id="overlay">
     <div id="tvContainer">
@@ -152,6 +183,7 @@
   const input = document.getElementById("codeInput");
   const terminal = document.getElementById("terminal");
   const overlay = document.getElementById("overlay");
+  const welcomeMessage = document.getElementById("welcomeScreen");
   const tvVideo = document.getElementById("tvVideo");
   const closeOverlayBtn = document.getElementById("closeOverlayBtn");
   const errorSound = document.getElementById("errorSound");
@@ -192,15 +224,15 @@
         log("Files/Assets/Videos\n- Files/Assets/Images\n- Files/Assets/Executables\n-");
         break;
 
-      case "Files/Assets/Videos":
+      case "files/assets/videos":
         log("[ Empty Folder ]");
         break;
 
-      case "Files/Assets/Images":
+      case "files/assets/images":
         log("Me.png\n- James.png\n- RBxStuDio.png\n- Eye.png\n-");
         break;
 
-      case "Files/Assets/Executables":
+      case "files/assets/executables":
         log("Temp.rbxm\n- RobloxStudio.exe\n- AntiVirus.exe\n-");
         break;
 
@@ -247,8 +279,22 @@
     terminal.style.display = 'flex';
   }
 
+  function enterTerminal() {
+    tvVideo.src = '';
+    welcomeMessage.style.display = 'none';
+    terminal.style.display = 'flex';
+  }
+
+  function hideTerminal() {
+    tvVideo.src = '';
+    welcomeMessage.style.display = 'flex';
+    terminal.style.display = 'none';
+    overlay.style.display = 'none';
+  }
+
   closeOverlayBtn.onclick = hideVideo;
-  hideVideo();
+  hideTerminal();
+
   
   input.addEventListener("keypress", (e) => {
     if (e.key === "Enter") {
