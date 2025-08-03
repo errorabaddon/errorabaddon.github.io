@@ -1,79 +1,91 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CMD TV Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Abaddon Terminal with TV Overlay</title>
   <style>
-    body {
-      margin: 0;
-      background-color: black;
+    html, body {
+      margin: 0; padding: 0;
+      background: black;
+      height: 100%;
+      font-family: 'Courier New', Courier, monospace;
       color: red;
-      font-family: monospace;
       overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
-    #terminal {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 80%;
-      max-width: 900px;
-      height: 500px;
+    .terminal {
       background-color: black;
+      color: red;
       border: 2px solid red;
       padding: 20px;
+      width: 800px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
       box-sizing: border-box;
+      z-index: 10;
+      position: relative;
+    }
+
+    .output {
+      flex: 1;
       overflow-y: auto;
       white-space: pre-wrap;
     }
 
-    #inputLine {
+    .input-area {
       display: flex;
+      gap: 10px;
       margin-top: 10px;
     }
 
-    #inputPrompt {
-      margin-right: 10px;
-    }
-
-    #commandInput {
+    input {
+      flex: 1;
       background-color: black;
       color: red;
       border: none;
+      font-size: 16px;
       outline: none;
-      font-family: monospace;
-      flex-grow: 1;
     }
 
+    button {
+      background-color: black;
+      color: red;
+      border: 1px solid red;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    /* Overlay hidden by default */
     #overlay {
       display: none;
-      flex-direction: column;
-      align-items: center;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 30;
       justify-content: center;
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: black;
-      z-index: 999;
+      align-items: center;
+      flex-direction: column;
+      display: flex;
     }
 
     #tvContainer {
       position: relative;
-      width: 640px;
-      height: 640px;
+      width: 740px;
+      height: 460px;
     }
 
     #tvVideo {
       position: absolute;
-      top: 42px;
+      top: 43px; 
       left: 50%;
       transform: translateX(-50%);
-      width: 464px;
-      height: 260px;
+      width: 680px;
+      height: 385px;
       z-index: 1;
       border: none;
       background: black;
@@ -81,13 +93,12 @@
 
     #tvFrameImg {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 640px;
-      height: 640px;
+      top: 0; left: 0;
+      width: 740px;
+      height: 460px;
       z-index: 2;
       pointer-events: none;
-      object-fit: contain;
+      user-select: none;
     }
 
     #closeOverlayBtn {
@@ -103,15 +114,17 @@
   </style>
 </head>
 <body>
-  <div id="terminal">
-    <div id="output"></div>
-    <div id="inputLine">
-      <span id="inputPrompt">></span>
-      <input type="text" id="commandInput" autofocus />
+
+  <div class="terminal" id="terminal">
+    <div class="output" id="output">Abaddon Terminal initialized. Type 'help' for commands.</div>
+    <div class="input-area">
+      <span>&gt;</span>
+      <input type="text" id="codeInput" autofocus />
+      <button onclick="handleInput()">Enter</button>
     </div>
   </div>
 
-  <!-- Overlay TV View -->
+  <!-- Video Overlay -->
   <div id="overlay">
     <div id="tvContainer">
       <iframe id="tvVideo" src="" allowfullscreen></iframe>
@@ -121,63 +134,106 @@
   </div>
 
   <!-- Audio -->
-  <audio id="bgMusic" src="assets/audio/bgmusic.mp3" loop autoplay></audio>
+  <audio id="bgMusic" src="assets/audio/bgmusic.mp3" loop></audio>
   <audio id="errorSound" src="assets/audio/error.mp3" preload="auto"></audio>
 
-  <script>
-    const videos = {
-      "bee.": "https://www.youtube.com/embed/3ZBzJO5oRMw",
-      "abaddon": "https://www.youtube.com/embed/VbNpA7HE8Ps",
-      "realasfuck": "https://www.youtube.com/embed/o5g-lUuFgpg"
+<script>
+  const videos = {
+    "bee.": "https://www.youtube.com/embed/3ZBzJO5oRMw",
+    "abaddon": "https://www.youtube.com/embed/VbNpA7HE8Ps",
+    "realasfuck": "https://www.youtube.com/embed/o5g-lUuFgpg"
+  };
+
+  const output = document.getElementById("output");
+  const input = document.getElementById("codeInput");
+  const terminal = document.getElementById("terminal");
+  const overlay = document.getElementById("overlay");
+  const tvVideo = document.getElementById("tvVideo");
+  const closeOverlayBtn = document.getElementById("closeOverlayBtn");
+  const errorSound = document.getElementById("errorSound");
+  const bgMusic = document.getElementById("bgMusic");
+
+  // Play background music after user interaction (due to browser autoplay policies)
+  window.onload = () => {
+    bgMusic.volume = 0.3;
+    const playMusic = () => {
+      bgMusic.play().catch(() => {
+        log("Click or press Enter to start background music.");
+      });
+      window.removeEventListener('click', playMusic);
+      window.removeEventListener('keydown', playMusic);
     };
+    window.addEventListener('click', playMusic);
+    window.addEventListener('keydown', playMusic);
+  };
 
-    const commandInput = document.getElementById("commandInput");
-    const output = document.getElementById("output");
-    const errorSound = document.getElementById("errorSound");
-    const bgMusic = document.getElementById("bgMusic");
+  function log(text) {
+    output.innerText += `\n> ${text}`;
+    output.scrollTop = output.scrollHeight;
+  }
 
-    const overlay = document.getElementById("overlay");
-    const tvVideo = document.getElementById("tvVideo");
-    const terminal = document.getElementById("terminal");
-    const closeOverlayBtn = document.getElementById("closeOverlayBtn");
+  function handleInput() {
+    const value = input.value.trim().toLowerCase();
+    if (!value) return;
 
-    // Handle input commands
-    commandInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const command = commandInput.value.trim();
-        output.innerHTML += `\n> ${command}`;
-        commandInput.value = "";
+    log(value);
+    input.value = "";
 
-        if (command === "clean") {
-          output.innerHTML = "";
-        } else if (videos[command]) {
-          showVideoOverlay(videos[command]);
+    switch (value) {
+      case "help":
+        log("Available commands:\n- help\n- clean\n- playbg\n- pausebg\n- stopvideo\n- [video code]");
+        break;
+
+      case "clean":
+        output.innerText = "Abaddon Terminal cleared.";
+        break;
+
+      case "playbg":
+        bgMusic.volume = 0.3;
+        bgMusic.play();
+        log("Background music playing...");
+        break;
+
+      case "pausebg":
+        bgMusic.pause();
+        log("Background music paused.");
+        break;
+
+      case "stopvideo":
+        hideVideo();
+        log("Video stopped. Back to terminal.");
+        break;
+
+      default:
+        if (videos[value]) {
+          showVideoOverlay(videos[value]);
+          log(`Playing video for code: ${value}`);
         } else {
-          output.innerHTML += `\nInvalid code. Try again.`;
           errorSound.play();
+          log("Invalid code or command.");
         }
-
-        // Scroll to bottom
-        terminal.scrollTop = terminal.scrollHeight;
-      }
-    });
-
-    // Show TV and hide terminal
-    function showVideoOverlay(url) {
-      tvVideo.src = url;
-      overlay.style.display = "flex";
-      terminal.style.display = "none";
     }
+  }
 
-    // Return to terminal
-    function hideVideo() {
-      tvVideo.src = "";
-      overlay.style.display = "none";
-      terminal.style.display = "flex";
+  function showVideoOverlay(url) {
+    tvVideo.src = url;
+    overlay.style.display = 'flex';
+    terminal.style.display = 'none';
+  }
+
+  function hideVideo() {
+    tvVideo.src = '';
+    overlay.style.display = 'none';
+    terminal.style.display = 'flex';
+  }
+
+  closeOverlayBtn.onclick = hideVideo;
+
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      handleInput();
     }
-
-    closeOverlayBtn.addEventListener("click", hideVideo);
-  </script>
+  });
+</script>
 </body>
 </html>
-
