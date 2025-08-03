@@ -142,10 +142,11 @@
 
 <script>
   const videos = {
-    "bee.": "https://www.youtube.com/embed/3ZBzJO5oRMw",
-    "abaddon": "https://www.youtube.com/embed/VbNpA7HE8Ps",
-    "realasfuck": "https://www.youtube.com/embed/o5g-lUuFgpg"
-  };
+  "bee.": "https://www.youtube.com/embed/3ZBzJO5oRMw?autoplay=1",
+  "abaddon": "https://www.youtube.com/embed/VbNpA7HE8Ps?autoplay=1",
+  "realasfuck": "https://www.youtube.com/embed/o5g-lUuFgpg?autoplay=1"
+};
+
 
   const output = document.getElementById("output");
   const input = document.getElementById("codeInput");
@@ -184,7 +185,23 @@
 
     switch (value) {
       case "help":
-        log("Available commands:\n- help\n- clean\n- playbg\n- pausebg\n- stopvideo\n- [video code]");
+        log("Available commands:\n- help\n- clean\n- playbg\n- pausebg\n- stopvideo\n- showfiles\n- [video code]");
+        break;
+
+      case "showfiles":
+        log("Files/Assets/Videos\n- Files/Assets/Images\n- Files/Assets/Executables\n-");
+        break;
+
+      case "Files/Assets/Videos":
+        log("[ Empty Folder ]");
+        break;
+
+      case "Files/Assets/Images":
+        log("Me.png\n- James.png\n- RBxStuDio.png\n- Eye.png\n-");
+        break;
+
+      case "Files/Assets/Executables":
+        log("Temp.rbxm\n- RobloxStudio.exe\n- AntiVirus.exe\n-");
         break;
 
       case "clean":
