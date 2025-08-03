@@ -5,77 +5,92 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Abaddon Terminal</title>
   <style>
-    body {
+    html, body {
+      margin: 0;
+      padding: 0;
       background-color: black;
-      color: #00ff00;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: 'Courier New', Courier, monospace;
-      padding: 2rem;
-    }
-
-    h1 {
-      color: #00ff00;
+      overflow: hidden;
     }
 
     .terminal {
-      border: 2px solid #00ff00;
-      padding: 1rem;
-      max-width: 700px;
-      margin: auto;
       background-color: black;
+      color: red;
+      border: 2px solid red;
+      padding: 20px;
+      width: 800px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
     }
 
-    #codeInput {
+    .output {
+      flex: 1;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .input-area {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    input {
+      flex: 1;
       background-color: black;
-      color: #00ff00;
+      color: red;
       border: none;
-      font-family: inherit;
       font-size: 16px;
       outline: none;
-      width: 80%;
     }
 
     button {
       background-color: black;
-      color: #00ff00;
-      border: 1px solid #00ff00;
+      color: red;
+      border: 1px solid red;
       padding: 5px 10px;
-      font-family: inherit;
       cursor: pointer;
     }
 
     iframe {
-      display: block;
-      margin: 2rem auto 0;
-      width: 100%;
-      max-width: 640px;
+      margin-top: 20px;
+      width: 640px;
       height: 360px;
       border: none;
     }
 
-    #error {
-      color: red;
-      margin-top: 1rem;
-      text-align: center;
-    }
-
-    .prompt-line {
-      margin-top: 1rem;
+    #videoContainer {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
     }
   </style>
 </head>
 <body>
+
   <div class="terminal">
-    <h1>Abaddon Command Prompt</h1>
-    <div class="prompt-line">> Enter Code:</div>
-    <input type="text" id="codeInput" autofocus />
-    <button onclick="checkCode()">Submit</button>
-    <div id="error"></div>
+    <div class="output" id="output">Abaddon Terminal initialized. Type 'help' for commands.</div>
+    <div class="input-area">
+      <span>&gt;</span>
+      <input type="text" id="codeInput" autofocus />
+      <button onclick="handleInput()">Enter</button>
+    </div>
   </div>
 
   <div id="videoContainer"></div>
 
-  <!-- Sound (small beep) -->
-  <audio id="errorSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg" preload="auto"></audio>
+  <!-- Background Music (optional, muted at first) -->
+  <audio id="bgMusic" src="yourmusic.mp3" loop></audio>
+
+  <!-- Custom Error SFX -->
+  <audio id="errorSound" src="yourerror.ogg" preload="auto"></audio>
 
   <script>
     const videos = {
@@ -84,27 +99,55 @@
       "realasfuck": "https://www.youtube.com/embed/o5g-lUuFgpg"
     };
 
-    function checkCode() {
-      const code = document.getElementById("codeInput").value.trim().toLowerCase();
-      const videoUrl = videos[code];
-      const videoContainer = document.getElementById("videoContainer");
-      const error = document.getElementById("error");
-      const errorSound = document.getElementById("errorSound");
+    const output = document.getElementById("output");
+    const input = document.getElementById("codeInput");
+    const videoContainer = document.getElementById("videoContainer");
+    const errorSound = document.getElementById("errorSound");
+    const bgMusic = document.getElementById("bgMusic");
 
-      if (videoUrl) {
-        error.textContent = "";
-        videoContainer.innerHTML = `<iframe src="${videoUrl}" allowfullscreen></iframe>`;
-      } else {
-        videoContainer.innerHTML = "";
-        error.textContent = "Invalid code. Please try again.";
-        errorSound.play();
+    function log(text) {
+      output.innerText += `\n> ${text}`;
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function handleInput() {
+      const value = input.value.trim().toLowerCase();
+      if (value === "") return;
+
+      log(value);
+      input.value = "";
+
+      // Commands
+      switch (value) {
+        case "help":
+          log("Available commands:\n- help\n- clean\n- playbg\n- pausebg\n- [video code]");
+          break;
+        case "clean":
+          output.innerText = "Abaddon Terminal cleared.";
+          break;
+        case "playbg":
+          bgMusic.volume = 0.5;
+          bgMusic.play();
+          log("Background music playing...");
+          break;
+        case "pausebg":
+          bgMusic.pause();
+          log("Background music paused.");
+          break;
+        default:
+          if (videos[value]) {
+            videoContainer.innerHTML = `<iframe src="${videos[value]}" allowfullscreen></iframe>`;
+          } else {
+            errorSound.play();
+            log("Invalid code or command.");
+            videoContainer.innerHTML = "";
+          }
       }
     }
 
-    // Allow Enter key to submit
-    document.getElementById("codeInput").addEventListener("keypress", function (e) {
+    input.addEventListener("keypress", function (e) {
       if (e.key === "Enter") {
-        checkCode();
+        handleInput();
       }
     });
   </script>
