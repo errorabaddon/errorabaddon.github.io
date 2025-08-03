@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Abaddon Terminal</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Abaddon Terminal with Overlay TV</title>
   <style>
     html, body {
-      margin: 0;
-      padding: 0;
-      background-color: black;
+      margin: 0; padding: 0;
+      background: black;
       height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       font-family: 'Courier New', Courier, monospace;
+      color: red;
       overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
 
     .terminal {
@@ -27,6 +27,8 @@
       display: flex;
       flex-direction: column;
       box-sizing: border-box;
+      z-index: 10;
+      position: relative;
     }
 
     .output {
@@ -58,24 +60,71 @@
       cursor: pointer;
     }
 
-    iframe {
-      margin-top: 20px;
+    #videoContainer {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: none; /* hidden by default */
+      z-index: 20;
+    }
+
+    #videoContainer iframe {
       width: 640px;
       height: 360px;
       border: none;
+      display: block;
     }
 
-    #videoContainer {
-      position: absolute;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
+    /* Overlay with TV frame */
+    #overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.9);
+      display: none; /* hidden initially */
+      z-index: 30;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      display: flex;
+    }
+
+    #tvFrame {
+      position: relative;
+      width: 700px;
+      height: 430px;
+      background: url('https://i.imgur.com/8bYfyyB.png') no-repeat center center; /* Example TV frame PNG */
+      background-size: contain;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 35px 20px 20px 20px; /* adjust so video fits inside frame screen */
+      box-sizing: border-box;
+    }
+
+    #tvFrame iframe {
+      width: 640px;
+      height: 360px;
+      border: none;
+      background: black;
+      box-shadow: 0 0 30px red;
+    }
+
+    #closeOverlayBtn {
+      margin-top: 20px;
+      padding: 8px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      border: 1px solid red;
+      background: black;
+      color: red;
+      font-family: monospace;
     }
   </style>
 </head>
 <body>
 
-  <div class="terminal">
+  <div class="terminal" id="terminal">
     <div class="output" id="output">Abaddon Terminal initialized. Type 'help' for commands.</div>
     <div class="input-area">
       <span>&gt;</span>
@@ -86,68 +135,141 @@
 
   <div id="videoContainer"></div>
 
-<audio id="bgMusic" src="assets/audio/bgmusic.mp3" loop></audio>
-<audio id="errorSound" src="assets/audio/error.mp3" preload="auto"></audio>
+  <!-- Overlay with TV Frame and Video -->
+  <div id="overlay">
+    <div id="tvFrame">
+      <!-- Video iframe goes here -->
+    </div>
+    <button id="closeOverlayBtn">Return to Terminal</button>
+  </div>
 
-  <script>
-    const videos = {
-      "bee.": "https://www.youtube.com/embed/3ZBzJO5oRMw",
-      "abaddon": "https://www.youtube.com/embed/VbNpA7HE8Ps",
-      "nomaskison": "https://www.youtube.com/embed/KvR_QlXaAfU&t",
-      "realasfuck": "https://www.youtube.com/embed/o5g-lUuFgpg"
+  <!-- Audio -->
+  <audio id="bgMusic" src="assets/audio/bgmusic.mp3" loop></audio>
+  <audio id="errorSound" src="assets/audio/error.mp3" preload="auto"></audio>
+
+<script>
+  const videos = {
+    "bee.": "https://www.youtube.com/embed/3ZBzJO5oRMw",
+    "abaddon": "https://www.youtube.com/embed/VbNpA7HE8Ps",
+    "realasfuck": "https://www.youtube.com/embed/o5g-lUuFgpg"
+  };
+
+  const output = document.getElementById("output");
+  const input = document.getElementById("codeInput");
+  const videoContainer = document.getElementById("videoContainer");
+  const errorSound = document.getElementById("errorSound");
+  const bgMusic = document.getElementById("bgMusic");
+  const terminal = document.getElementById("terminal");
+  const overlay = document.getElementById("overlay");
+  const tvFrame = document.getElementById("tvFrame");
+  const closeOverlayBtn = document.getElementById("closeOverlayBtn");
+
+  // Start bg music automatically (with volume)
+  window.onload = () => {
+    bgMusic.volume = 0.3;
+    // Play music only after user interaction due to browser policies
+    const playMusic = () => {
+      bgMusic.play().catch(() => {
+        // Autoplay blocked, wait for interaction
+        log("Click or press Enter to start background music.");
+      });
+      window.removeEventListener('click', playMusic);
+      window.removeEventListener('keydown', playMusic);
     };
+    window.addEventListener('click', playMusic);
+    window.addEventListener('keydown', playMusic);
+  };
 
-    const output = document.getElementById("output");
-    const input = document.getElementById("codeInput");
-    const videoContainer = document.getElementById("videoContainer");
-    const errorSound = document.getElementById("errorSound");
-    const bgMusic = document.getElementById("bgMusic");
+  function log(text) {
+    output.innerText += `\n> ${text}`;
+    output.scrollTop = output.scrollHeight;
+  }
 
-    function log(text) {
-      output.innerText += `\n> ${text}`;
-      output.scrollTop = output.scrollHeight;
+  function handleInput() {
+    const value = input.value.trim().toLowerCase();
+    if (value === "") return;
+
+    log(value);
+    input.value = "";
+
+    switch (value) {
+      case "help":
+        log("Available commands:\n- help\n- clean\n- playbg\n- pausebg\n- stopvideo\n- [video code]");
+        break;
+
+      case "clean":
+        output.innerText = "Abaddon Terminal cleared.";
+        break;
+
+      case "playbg":
+        bgMusic.volume = 0.3;
+        bgMusic.play();
+        log("Background music playing...");
+        break;
+
+      case "pausebg":
+        bgMusic.pause();
+        log("Background music paused.");
+        break;
+
+      case "stopvideo":
+        hideVideo();
+        log("Video stopped. Back to terminal.");
+        break;
+
+      default:
+        if (videos[value]) {
+          showVideoOverlay(videos[value]);
+          log(`Playing video for code: ${value}`);
+        } else {
+          errorSound.play();
+          log("Invalid code or command.");
+        }
     }
+  }
 
-    function handleInput() {
-      const value = input.value.trim().toLowerCase();
-      if (value === "") return;
+  // Show the overlay with video inside TV frame
+  function showVideoOverlay(url) {
+    // Pause background music (optional)
+    // bgMusic.pause();
 
-      log(value);
-      input.value = "";
+    // Clear previous iframe
+    tvFrame.innerHTML = "";
 
-      // Commands
-      switch (value) {
-        case "help":
-          log("Available commands:\n- help\n- clean\n- playbg\n- pausebg\n- [video code]");
-          break;
-        case "clean":
-          output.innerText = "Abaddon Terminal cleared.";
-          break;
-        case "playbg":
-          bgMusic.volume = 0.5;
-          bgMusic.play();
-          log("Background music playing...");
-          break;
-        case "pausebg":
-          bgMusic.pause();
-          log("Background music paused.");
-          break;
-        default:
-          if (videos[value]) {
-            videoContainer.innerHTML = `<iframe src="${videos[value]}" allowfullscreen></iframe>`;
-          } else {
-            errorSound.play();
-            log("Invalid code or command.");
-            videoContainer.innerHTML = "";
-          }
-      }
+    // Create new iframe
+    const iframe = document.createElement("iframe");
+    iframe.src = url;
+    iframe.allowFullscreen = true;
+    tvFrame.appendChild(iframe);
+
+    // Hide terminal and show overlay
+    terminal.style.display = "none";
+    overlay.style.display = "flex";
+  }
+
+  function hideVideo() {
+    // Remove iframe to stop video
+    tvFrame.innerHTML = "";
+
+    // Hide overlay and show terminal
+    overlay.style.display = "none";
+    terminal.style.display = "flex";
+
+    // Optionally resume bg music
+    // bgMusic.play();
+  }
+
+  closeOverlayBtn.onclick = () => {
+    hideVideo();
+  };
+
+  // Enter key triggers input
+  input.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") {
+      handleInput();
     }
-
-    input.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") {
-        handleInput();
-      }
-    });
-  </script>
+  });
+</script>
 </body>
 </html>
+
