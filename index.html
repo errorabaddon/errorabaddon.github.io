@@ -18,20 +18,18 @@
     }
 
     .terminal {
-  background-color: black;
-  color: red;
-  border: 2px solid red;
-  padding: 20px;
-  width: 90%;
-  max-width: 800px;
-  height: 80vh;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
-  z-index: 10;
-  position: relative;
-}
-
+      background-color: black;
+      color: red;
+      border: 2px solid red;
+      padding: 20px;
+      width: 800px;
+      height: 600px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      z-index: 10;
+      position: relative;
+    }
 
     .output {
       flex: 1;
@@ -99,39 +97,35 @@
       display: flex;
     }
 
-#tvContainer {
-  position: relative;
-  width: 90vw;
-  max-width: 740px;
-  height: auto;
-  aspect-ratio: 16 / 9;
-}
+    #tvContainer {
+      position: relative;
+      width: 740px;
+      height: 460px;
+    }
 
-#tvVideo {
+  #tvVideo {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 65%;
-  height: 65%;
+  top: 60%;
+  left: 45%;
   transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
   z-index: 1;
   border: none;
   background: black;
 }
 
-
     #tvFrameImg {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 100%;
-  height: auto;
+  width: 460px;
+  height: 460px;
   transform: translate(-50%, -50%);
   z-index: 2;
   pointer-events: none;
   user-select: none;
 }
-
 
 
     #closeOverlayBtn {
@@ -210,7 +204,7 @@
   };
 
   function log(text) {
-    output.innerText += `\n> ${text}`;
+    output.innerText += \n> ${text};
     output.scrollTop = output.scrollHeight;
   }
 
@@ -265,7 +259,7 @@
       default:
         if (videos[value]) {
           showVideoOverlay(videos[value]);
-          log(`Playing video for code: ${value}`);
+          log(Playing video for code: ${value});
         } else {
           errorSound.play();
           log("Invalid code or command.");
@@ -307,22 +301,6 @@
       handleInput();
     }
   });
-
-@media (max-width: 600px) {
-  .terminal {
-    padding: 10px;
-    font-size: 14px;
-  }
-
-  .input-area input {
-    font-size: 14px;
-  }
-
-  #tvVideo {
-    width: 80%;
-    height: 80%;
-  }
-}
 
   
 </script>
